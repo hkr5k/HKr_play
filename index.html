@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Musify Web Player</title>
+  <title>Musify Full Player</title>
   <meta name="theme-color" content="#121212">
   <style>
     * { box-sizing: border-box; }
@@ -23,7 +23,7 @@
 </head>
 <body>
   <header>
-    <input type="text" id="query" placeholder="Search songs or artists..." onkeydown="if(event.key==='Enter') search()">
+    <input type="text" id="query" placeholder="Search full songs..." onkeydown="if(event.key==='Enter') search()">
     <button onclick="search()">Search</button>
   </header>
   <ul id="list"></ul>
@@ -33,53 +33,60 @@
   </div>
 
   <script>
-    // Browser CORS Bypass via Dynamic Script Tag (JSONP)
-    function search() {
+    // High-speed open endpoint supporting full 320kbps streams without CORS limitation
+    async function search() {
       const q = document.getElementById('query').value.trim();
       if (!q) return;
       const list = document.getElementById('list');
-      list.innerHTML = "<p style='text-align:center; color:#888;'>Searching songs...</p>";
+      list.innerHTML = "<p style='text-align:center; color:#888;'>Searching full tracks...</p>";
 
-      // Clean old script tag if exists
-      const oldScript = document.getElementById('jsonp-search');
-      if (oldScript) oldScript.remove();
+      try {
+        const res = await fetch(`https://saavn.dev{encodeURIComponent(q)}&page=1&limit=25`);
+        const result = await res.json();
+        const songs = result.data?.results || [];
 
-      const script = document.createElement('script');
-      script.id = 'jsonp-search';
-      script.src = `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&entity=song&limit=30&callback=handleResults`;
-      document.body.appendChild(script);
+        list.innerHTML = "";
+        if (songs.length === 0) {
+          list.innerHTML = "<p style='text-align:center; color:#888;'>No songs found.</p>";
+          return;
+        }
+
+        songs.forEach(item => {
+          const title = item.name || 'Unknown Title';
+          const artist = (item.artists?.primary && item.artists.primary.length > 0) 
+                         ? item.artists.primary.map(a => a.name).join(', ') 
+                         : 'Unknown Artist';
+          
+          const thumb = (item.image && item.image.length > 0) 
+                        ? item.image[item.image.length - 1].url 
+                        : 'https://placeholder.com';
+          
+          // Get the highest quality audio stream (320kbps full track)
+          const downloadUrls = item.downloadUrl || [];
+          const fullAudioUrl = downloadUrls.length > 0 
+                               ? downloadUrls[downloadUrls.length - 1].url 
+                               : '';
+
+          if (!fullAudioUrl) return;
+
+          const li = document.createElement('li');
+          li.innerHTML = `
+            <img src="${thumb}" alt="art">
+            <div class="info">
+              <div class="title">${title}</div>
+              <div class="sub">${artist}</div>
+            </div>
+            <button onclick="playSong('${fullAudioUrl}', '${title.replace(/'/g, "\\'")}')">Play</button>
+          `;
+          list.appendChild(li);
+        });
+      } catch (err) {
+        list.innerHTML = "<p style='color:#e91e63; text-align:center;'>Search failed. Please try again.</p>";
+      }
     }
 
-    window.handleResults = function(data) {
-      const list = document.getElementById('list');
-      list.innerHTML = "";
-
-      if (!data.results || data.results.length === 0) {
-        list.innerHTML = "<p style='text-align:center; color:#888;'>No songs found.</p>";
-        return;
-      }
-
-      data.results.forEach(item => {
-        const title = item.trackName || 'Unknown Title';
-        const artist = item.artistName || 'Unknown Artist';
-        const thumb = item.artworkUrl100 || 'https://placeholder.com';
-        const previewUrl = item.previewUrl;
-
-        const li = document.createElement('li');
-        li.innerHTML = `
-          <img src="${thumb}" alt="art">
-          <div class="info">
-            <div class="title">${title}</div>
-            <div class="sub">${artist}</div>
-          </div>
-          <button onclick="playSong('${previewUrl}', '${title.replace(/'/g, "\\'")}')">Play</button>
-        `;
-        list.appendChild(li);
-      });
-    };
-
     function playSong(url, title) {
-      document.getElementById('nowPlaying').innerText = "Playing: " + title;
+      document.getElementById('nowPlaying').innerText = "Playing Full Song: " + title;
       const audio = document.getElementById('audio');
       audio.src = url;
       audio.play();
