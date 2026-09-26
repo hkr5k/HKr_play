@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Musify Web</title>
+  <meta name="theme-color" content="#121212">
+  <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiTXVzaWZ5IFBsYXllciIsInNob3J0X25hbWUiOiJNdXNpZnkiLCJzdGFydF91cmwiOiIuIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzEyMTIxMiIsInRoZW1lX2NvbG9yIjoiIzEyMTIxMiJ9">
+  <style>
+    body { margin: 0; font-family: sans-serif; background: #121212; color: #fff; display: flex; flex-direction: column; height: 100vh; }
+    header { padding: 15px; background: #1f1f1f; display: flex; gap: 10px; }
+    input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #2a2a2a; color: #fff; font-size: 16px; }
+    button { padding: 10px 15px; border-radius: 8px; border: none; background: #1db954; color: #fff; font-weight: bold; }
+    #list { flex: 1; overflow-y: auto; padding: 10px; list-style: none; margin: 0; }
+    li { display: flex; align-items: center; gap: 12px; padding: 10px; border-bottom: 1px solid #222; }
+    img { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; }
+    .info { flex: 1; }
+    .title { font-weight: bold; font-size: 15px; margin-bottom: 4px; }
+    .sub { font-size: 12px; color: #aaa; }
+    #player { padding: 15px; background: #181818; border-top: 1px solid #282828; display: flex; flex-direction: column; gap: 10px; }
+    audio { width: 100%; height: 40px; }
+  </style>
+</head>
+<body>
+  <header>
+    <input type="text" id="query" placeholder="गाना या आर्टिस्ट खोजें...">
+    <button onclick="search()">Search</button>
+  </header>
+  <ul id="list"></ul>
+  <div id="player">
+    <div id="nowPlaying" style="font-size: 14px; font-weight: bold;">कोई गाना नहीं चल रहा</div>
+    <audio id="audio" controls autoplay></audio>
+  </div>
+
+  <script>
+    const serverUrl = "https://railway.app";
+
+    async function search() {
+      const q = document.getElementById('query').value;
+      if (!q) return;
+      const list = document.getElementById('list');
+      list.innerHTML = "<p style='text-align:center;'>खोज रहे हैं...</p>";
+      try {
+        const res = await fetch(`${serverUrl}/search/?query=${encodeURIComponent(q)}&filter=songs`);
+        const data = await res.json();
+        list.innerHTML = "";
+        data.forEach(item => {
+          const title = item.title || 'Unknown';
+          const artist = item.artists ? item.artists.map(a => a.name).join(', ') : '';
+          const thumb = (item.thumbnails && item.thumbnails.length > 0) ? item.thumbnails.url : '';
+          const videoId = item.videoId;
+
+          const li = document.createElement('li');
+          li.innerHTML = `
+            <img src="${thumb}">
+            <div class="info">
+              <div class="title">${title}</div>
+              <div class="sub">${artist}</div>
+            </div>
+            <button onclick="playSong('${videoId}', '${title.replace(/'/g, "\\'")}')">Play</button>
+          `;
+          list.appendChild(li);
+        });
+      } catch (err) {
+        list.innerHTML = "<p style='color:red; text-align:center;'>सर्च करने में समस्या आई</p>";
+      }
+    }
+
+    function playSong(id, title) {
+      document.getElementById('nowPlaying').innerText = "बज रहा है: " + title;
+      const audio = document.getElementById('audio');
+      audio.src = `https://kavin.rocks{id}`;
+      audio.play();
+    }
+  </script>
+</body>
+</html>
