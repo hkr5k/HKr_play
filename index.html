@@ -1,38 +1,38 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Musify Web</title>
+  <title>Musify Web Player</title>
   <meta name="theme-color" content="#121212">
   <style>
-    body { margin: 0; font-family: sans-serif; background: #121212; color: #fff; display: flex; flex-direction: column; height: 100vh; }
-    header { padding: 15px; background: #1f1f1f; display: flex; gap: 10px; }
-    input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #2a2a2a; color: #fff; font-size: 16px; }
-    button { padding: 10px 15px; border-radius: 8px; border: none; background: #1db954; color: #fff; font-weight: bold; cursor: pointer; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #121212; color: #fff; display: flex; flex-direction: column; height: 100vh; }
+    header { padding: 15px; background: #181818; display: flex; gap: 10px; border-bottom: 1px solid #282828; }
+    input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #242424; color: #fff; font-size: 15px; outline: none; }
+    button { padding: 12px 20px; border-radius: 8px; border: none; background: #1db954; color: #fff; font-weight: bold; cursor: pointer; }
     #list { flex: 1; overflow-y: auto; padding: 10px; list-style: none; margin: 0; }
-    li { display: flex; align-items: center; gap: 12px; padding: 10px; border-bottom: 1px solid #222; }
-    img { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; }
-    .info { flex: 1; }
-    .title { font-weight: bold; font-size: 15px; margin-bottom: 4px; }
-    .sub { font-size: 12px; color: #aaa; }
+    li { display: flex; align-items: center; gap: 12px; padding: 10px; border-bottom: 1px solid #1f1f1f; }
+    img { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; background: #222; }
+    .info { flex: 1; overflow: hidden; }
+    .title { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sub { font-size: 13px; color: #b3b3b3; margin-top: 3px; }
     #player { padding: 15px; background: #181818; border-top: 1px solid #282828; display: flex; flex-direction: column; gap: 10px; }
     audio { width: 100%; height: 40px; }
   </style>
 </head>
 <body>
   <header>
-    <input type="text" id="query" placeholder="गाना या आर्टिस्ट खोजें...">
+    <input type="text" id="query" placeholder="Search songs or artists...">
     <button onclick="search()">Search</button>
   </header>
   <ul id="list"></ul>
   <div id="player">
-    <div id="nowPlaying" style="font-size: 14px; font-weight: bold;">कोई गाना नहीं चल रहा</div>
+    <div id="nowPlaying" style="font-size: 14px; font-weight: 600; color: #1db954;">No track playing</div>
     <audio id="audio" controls autoplay></audio>
   </div>
 
   <script>
-    // CORS प्रॉक्सी जोड़कर ब्राउज़र ब्लॉकिंग को बायपास करना
     const apiTarget = "https://railway.app";
     const proxyUrl = "https://allorigins.win";
 
@@ -40,7 +40,7 @@
       const q = document.getElementById('query').value.trim();
       if (!q) return;
       const list = document.getElementById('list');
-      list.innerHTML = "<p style='text-align:center;'>खोज रहे हैं...</p>";
+      list.innerHTML = "<p style='text-align:center; color:#888;'>Searching songs...</p>";
 
       try {
         const fullUrl = encodeURIComponent(`${apiTarget}/search/?query=${encodeURIComponent(q)}&filter=songs`);
@@ -49,13 +49,13 @@
         
         list.innerHTML = "";
         if (!data || data.length === 0) {
-          list.innerHTML = "<p style='text-align:center;'>कोई गाना नहीं मिला</p>";
+          list.innerHTML = "<p style='text-align:center; color:#888;'>No results found.</p>";
           return;
         }
 
         data.forEach(item => {
-          const title = item.title || 'Unknown';
-          const artist = item.artists ? item.artists.map(a => a.name).join(', ') : '';
+          const title = item.title || 'Unknown Title';
+          const artist = item.artists ? item.artists.map(a => a.name).join(', ') : 'Unknown Artist';
           const thumb = (item.thumbnails && item.thumbnails.length > 0) ? item.thumbnails[item.thumbnails.length - 1].url : '';
           const videoId = item.videoId;
 
@@ -71,18 +71,16 @@
           list.appendChild(li);
         });
       } catch (err) {
-        list.innerHTML = "<p style='color:red; text-align:center;'>सर्च करने में समस्या आई, कृपया दोबारा प्रयास करें।</p>";
+        list.innerHTML = "<p style='color:#e91e63; text-align:center;'>Search failed. Please try again.</p>";
       }
     }
 
     function playSong(id, title) {
-      document.getElementById('nowPlaying').innerText = "बज रहा है: " + title;
+      document.getElementById('nowPlaying').innerText = "Playing: " + title;
       const audio = document.getElementById('audio');
-      // कार्यशील Piped/Invidious ऑडियो स्ट्रीम
       audio.src = `https://leptons.xyz{id}`;
       audio.play();
     }
   </script>
 </body>
 </html>
-
