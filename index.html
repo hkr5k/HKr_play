@@ -13,7 +13,7 @@
     button { padding: 12px 20px; border-radius: 8px; border: none; background: #1db954; color: #fff; font-weight: bold; cursor: pointer; }
     #list { flex: 1; overflow-y: auto; padding: 10px; list-style: none; margin: 0; }
     li { display: flex; align-items: center; gap: 12px; padding: 10px; border-bottom: 1px solid #1f1f1f; }
-    img { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; background: #222; }
+    img { width: 52px; height: 52px; border-radius: 6px; object-fit: cover; background: #222; }
     .info { flex: 1; overflow: hidden; }
     .title { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .sub { font-size: 13px; color: #b3b3b3; margin-top: 3px; }
@@ -33,70 +33,56 @@
   </div>
 
   <script>
-    const serverUrl = "https://railway.app";
-
-    async function search() {
+    // Browser CORS Bypass via Dynamic Script Tag (JSONP)
+    function search() {
       const q = document.getElementById('query').value.trim();
       if (!q) return;
       const list = document.getElementById('list');
       list.innerHTML = "<p style='text-align:center; color:#888;'>Searching songs...</p>";
 
-      try {
-        // Direct call without sluggish external proxies
-        let res = await fetch(`${serverUrl}/search/?query=${encodeURIComponent(q)}&filter=songs`);
-        if (!res.ok) {
-          throw new Error("HTTP error " + res.status);
-        }
-        let data = await res.json();
+      // Clean old script tag if exists
+      const oldScript = document.getElementById('jsonp-search');
+      if (oldScript) oldScript.remove();
 
-        list.innerHTML = "";
-        if (!Array.isArray(data) || data.length === 0) {
-          list.innerHTML = "<p style='text-align:center; color:#888;'>No results found.</p>";
-          return;
-        }
-
-        data.forEach(item => {
-          const title = item.title || 'Unknown Title';
-          let artist = 'Unknown Artist';
-          if (Array.isArray(item.artists)) {
-            artist = item.artists.map(a => typeof a === 'object' ? a.name : a).join(', ');
-          } else if (typeof item.artists === 'string') {
-            artist = item.artists;
-          }
-
-          let thumb = 'https://placeholder.com';
-          if (Array.isArray(item.thumbnails) && item.thumbnails.length > 0) {
-            thumb = item.thumbnails[item.thumbnails.length - 1].url || thumb;
-          }
-
-          const videoId = item.videoId;
-
-          const li = document.createElement('li');
-          li.innerHTML = `
-            <img src="${thumb}" alt="art">
-            <div class="info">
-              <div class="title">${title}</div>
-              <div class="sub">${artist}</div>
-            </div>
-            <button onclick="playSong('${videoId}', '${title.replace(/'/g, "\\'")}')">Play</button>
-          `;
-          list.appendChild(li);
-        });
-      } catch (err) {
-        list.innerHTML = "<p style='color:#e91e63; text-align:center;'>Search failed. Please ensure Railway server is awake and try again.</p>";
-      }
+      const script = document.createElement('script');
+      script.id = 'jsonp-search';
+      script.src = `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&entity=song&limit=30&callback=handleResults`;
+      document.body.appendChild(script);
     }
 
-    function playSong(id, title) {
+    window.handleResults = function(data) {
+      const list = document.getElementById('list');
+      list.innerHTML = "";
+
+      if (!data.results || data.results.length === 0) {
+        list.innerHTML = "<p style='text-align:center; color:#888;'>No songs found.</p>";
+        return;
+      }
+
+      data.results.forEach(item => {
+        const title = item.trackName || 'Unknown Title';
+        const artist = item.artistName || 'Unknown Artist';
+        const thumb = item.artworkUrl100 || 'https://placeholder.com';
+        const previewUrl = item.previewUrl;
+
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <img src="${thumb}" alt="art">
+          <div class="info">
+            <div class="title">${title}</div>
+            <div class="sub">${artist}</div>
+          </div>
+          <button onclick="playSong('${previewUrl}', '${title.replace(/'/g, "\\'")}')">Play</button>
+        `;
+        list.appendChild(li);
+      });
+    };
+
+    function playSong(url, title) {
       document.getElementById('nowPlaying').innerText = "Playing: " + title;
       const audio = document.getElementById('audio');
-      // Direct stream link via reliable public instance
-      audio.src = `https://kavin.rocks{id}`;
-      audio.play().catch(() => {
-        // Fallback stream
-        audio.src = `https://privacydev.net{id}`;
-        audio.play();
-      });
+      audio.src = url;
+      audio.play();
     }
   </script>
 </body>
