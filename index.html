@@ -49,16 +49,23 @@
 <body>
 
   <!-- Header -->
-  <div class="navbar">
-    <div class="brand">
-      <i class="fab fa-youtube"></i> Music
-    </div>
-    <div class="search-box">
-      <i class="fas fa-search" style="color:#aaa;"></i>
-      <input type="text" id="query" placeholder="Search songs or artists..." onkeydown="if(event.key==='Enter') searchMusic()">
-      <button onclick="searchMusic()">Search</button>
-    </div>
-  </div>
+function searchMusic() {
+  const q = document.getElementById('query').value.trim();
+  if (!q) return;
+
+  const resContainer = document.getElementById('results');
+  document.getElementById('heading').innerText = `Results for "${q}"`;
+  resContainer.innerHTML = "<p style='color:#aaa; text-align:center; padding:25px;'>Searching library...</p>";
+
+  const oldTag = document.getElementById('music-jsonp');
+  if (oldTag) oldTag.remove();
+
+  const script = document.createElement('script');
+  script.id = 'music-jsonp';
+  script.src = `https://railway.app{encodeURIComponent(q)}&callback=renderSongs`;
+  document.body.appendChild(script);
+}
+  
 
   <!-- Category Chips -->
   <div class="chips">
