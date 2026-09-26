@@ -2,95 +2,210 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Musify Full Player</title>
-  <meta name="theme-color" content="#121212">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>YouTube Music</title>
+  <meta name="theme-color" content="#030303">
+  <link rel="stylesheet" href="https://cloudflare.com">
   <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #121212; color: #fff; display: flex; flex-direction: column; height: 100vh; }
-    header { padding: 15px; background: #181818; display: flex; gap: 10px; border-bottom: 1px solid #282828; }
-    input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #242424; color: #fff; font-size: 15px; outline: none; }
-    button { padding: 12px 20px; border-radius: 8px; border: none; background: #1db954; color: #fff; font-weight: bold; cursor: pointer; }
-    #list { flex: 1; overflow-y: auto; padding: 10px; list-style: none; margin: 0; }
-    li { display: flex; align-items: center; gap: 12px; padding: 10px; border-bottom: 1px solid #1f1f1f; }
-    img { width: 52px; height: 52px; border-radius: 6px; object-fit: cover; background: #222; }
-    .info { flex: 1; overflow: hidden; }
-    .title { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .sub { font-size: 13px; color: #b3b3b3; margin-top: 3px; }
-    #player { padding: 15px; background: #181818; border-top: 1px solid #282828; display: flex; flex-direction: column; gap: 10px; }
-    audio { width: 100%; height: 40px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Roboto', -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background-color: #030303; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+    /* YouTube Music App Bar */
+    .navbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background-color: #030303; border-bottom: 1px solid #1a1a1a; }
+    .brand { display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+    .brand i { color: #ff0000; font-size: 24px; }
+    .search-box { display: flex; align-items: center; background: #212121; border-radius: 24px; padding: 6px 14px; flex: 1; max-width: 480px; margin-left: 20px; border: 1px solid #303030; }
+    .search-box input { border: none; background: transparent; color: #fff; width: 100%; outline: none; font-size: 14px; margin-left: 8px; }
+    .search-box button { background: none; border: none; color: #aaa; cursor: pointer; font-size: 14px; }
+
+    /* Category Chips */
+    .chips { display: flex; gap: 8px; padding: 12px 16px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+    .chip { background: #212121; border: 1px solid #333; padding: 6px 14px; border-radius: 16px; font-size: 13px; color: #f1f1f1; cursor: pointer; }
+    .chip.active { background: #fff; color: #000; font-weight: 500; }
+
+    /* Track List */
+    .container { flex: 1; overflow-y: auto; padding: 0 16px 90px 16px; }
+    .section-title { font-size: 18px; font-weight: 700; margin: 16px 0 12px 0; color: #fff; }
+    .song-item { display: flex; align-items: center; padding: 8px 0; gap: 14px; cursor: pointer; border-radius: 8px; }
+    .song-item:active { background: #181818; }
+    .song-art { width: 50px; height: 50px; border-radius: 4px; object-fit: cover; background: #222; flex-shrink: 0; }
+    .song-meta { flex: 1; min-width: 0; }
+    .song-name { font-size: 15px; font-weight: 500; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .song-artist { font-size: 13px; color: #aaa; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .more-btn { color: #aaa; padding: 10px; font-size: 16px; }
+
+    /* YT Music Bottom Mini-Player */
+    .player-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 64px; background: #212121; border-top: 1px solid #303030; display: flex; align-items: center; padding: 0 16px; gap: 12px; z-index: 100; }
+    .progress-line { position: absolute; top: 0; left: 0; height: 2px; background: #ff0000; width: 0%; transition: width 0.2s linear; }
+    .player-art { width: 44px; height: 44px; border-radius: 4px; object-fit: cover; background: #111; }
+    .player-info { flex: 1; min-width: 0; }
+    .player-title { font-size: 14px; font-weight: 500; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .player-sub { font-size: 12px; color: #aaa; }
+    .controls { display: flex; align-items: center; gap: 18px; }
+    .ctrl-btn { background: none; border: none; color: #fff; font-size: 22px; cursor: pointer; }
+    audio { display: none; }
   </style>
 </head>
 <body>
-  <header>
-    <input type="text" id="query" placeholder="Search full songs..." onkeydown="if(event.key==='Enter') search()">
-    <button onclick="search()">Search</button>
-  </header>
-  <ul id="list"></ul>
-  <div id="player">
-    <div id="nowPlaying" style="font-size: 14px; font-weight: 600; color: #1db954;">No track playing</div>
-    <audio id="audio" controls autoplay></audio>
+
+  <!-- Top Nav -->
+  <div class="navbar">
+    <div class="brand">
+      <i class="fab fa-youtube"></i> Music
+    </div>
+    <div class="search-box">
+      <i class="fas fa-search" style="color:#aaa;"></i>
+      <input type="text" id="query" placeholder="Search songs, albums, artists..." onkeydown="if(event.key==='Enter') searchMusic()">
+      <button onclick="searchMusic()">Search</button>
+    </div>
   </div>
 
+  <!-- Filter Chips -->
+  <div class="chips">
+    <div class="chip active">Relax</div>
+    <div class="chip">Workout</div>
+    <div class="chip">Energize</div>
+    <div class="chip">Commute</div>
+    <div class="chip">Focus</div>
+  </div>
+
+  <!-- Content List -->
+  <div class="container">
+    <div class="section-title" id="heading">Trending Hits</div>
+    <div id="results"></div>
+  </div>
+
+  <!-- YT Music Bottom Floating Player -->
+  <div class="player-bar">
+    <div class="progress-line" id="progress"></div>
+    <img src="https://placeholder.com" id="curThumb" class="player-art" alt="album">
+    <div class="player-info">
+      <div class="player-title" id="curTitle">No track playing</div>
+      <div class="player-sub" id="curArtist">Select a track</div>
+    </div>
+    <div class="controls">
+      <button class="ctrl-btn" onclick="togglePlay()"><i class="fas fa-play" id="playIcon"></i></button>
+      <button class="ctrl-btn" onclick="nextDummy()"><i class="fas fa-step-forward"></i></button>
+    </div>
+  </div>
+
+  <audio id="audio"></audio>
+
   <script>
-    // High-speed open endpoint supporting full 320kbps streams without CORS limitation
-    async function search() {
+    const audio = document.getElementById('audio');
+    const playIcon = document.getElementById('playIcon');
+    const progressBar = document.getElementById('progress');
+
+    // High Reliability Mirror Cluster for Full-Length Streams
+    const mirrors = [
+      "https://sumit.co",
+      "https://vercel.app"
+    ];
+
+    async function searchMusic() {
       const q = document.getElementById('query').value.trim();
       if (!q) return;
-      const list = document.getElementById('list');
-      list.innerHTML = "<p style='text-align:center; color:#888;'>Searching full tracks...</p>";
+      const resContainer = document.getElementById('results');
+      document.getElementById('heading').innerText = `Results for "${q}"`;
+      resContainer.innerHTML = "<p style='color:#aaa; text-align:center; padding:20px;'>Searching YouTube Music...</p>";
 
-      try {
-        const res = await fetch(`https://saavn.dev{encodeURIComponent(q)}&page=1&limit=25`);
-        const result = await res.json();
-        const songs = result.data?.results || [];
+      let data = [];
+      for (const endpoint of mirrors) {
+        try {
+          const res = await fetch(`${endpoint}?query=${encodeURIComponent(q)}&page=1&limit=25`);
+          if (res.ok) {
+            const json = await res.json();
+            data = json.data?.results || json.results || [];
+            if (data.length > 0) break;
+          }
+        } catch(e) {}
+      }
 
-        list.innerHTML = "";
-        if (songs.length === 0) {
-          list.innerHTML = "<p style='text-align:center; color:#888;'>No songs found.</p>";
-          return;
+      resContainer.innerHTML = "";
+      if (!data || data.length === 0) {
+        resContainer.innerHTML = "<p style='color:#aaa; text-align:center; padding:20px;'>No tracks found. Try another query.</p>";
+        return;
+      }
+
+      data.forEach(song => {
+        const title = song.name || song.title || 'Unknown Title';
+        let artist = 'Unknown Artist';
+        if (song.artists?.primary && song.artists.primary.length > 0) {
+          artist = song.artists.primary.map(a => a.name).join(', ');
+        } else if (song.primaryArtists) {
+          artist = song.primaryArtists;
         }
 
-        songs.forEach(item => {
-          const title = item.name || 'Unknown Title';
-          const artist = (item.artists?.primary && item.artists.primary.length > 0) 
-                         ? item.artists.primary.map(a => a.name).join(', ') 
-                         : 'Unknown Artist';
-          
-          const thumb = (item.image && item.image.length > 0) 
-                        ? item.image[item.image.length - 1].url 
-                        : 'https://placeholder.com';
-          
-          // Get the highest quality audio stream (320kbps full track)
-          const downloadUrls = item.downloadUrl || [];
-          const fullAudioUrl = downloadUrls.length > 0 
-                               ? downloadUrls[downloadUrls.length - 1].url 
-                               : '';
+        let thumb = 'https://placeholder.com';
+        if (Array.isArray(song.image) && song.image.length > 0) {
+          thumb = song.image[song.image.length - 1].url || song.image[song.image.length - 1].link || thumb;
+        }
 
-          if (!fullAudioUrl) return;
+        let streamUrl = '';
+        const downloads = song.downloadUrl || [];
+        if (Array.isArray(downloads) && downloads.length > 0) {
+          streamUrl = downloads[downloads.length - 1].url || downloads[downloads.length - 1].link;
+        }
 
-          const li = document.createElement('li');
-          li.innerHTML = `
-            <img src="${thumb}" alt="art">
-            <div class="info">
-              <div class="title">${title}</div>
-              <div class="sub">${artist}</div>
-            </div>
-            <button onclick="playSong('${fullAudioUrl}', '${title.replace(/'/g, "\\'")}')">Play</button>
-          `;
-          list.appendChild(li);
-        });
-      } catch (err) {
-        list.innerHTML = "<p style='color:#e91e63; text-align:center;'>Search failed. Please try again.</p>";
+        if (!streamUrl) return;
+
+        const row = document.createElement('div');
+        row.className = 'song-item';
+        row.onclick = () => playSong(streamUrl, title, artist, thumb);
+        row.innerHTML = `
+          <img src="${thumb}" class="song-art" alt="art">
+          <div class="song-meta">
+            <div class="song-name">${title}</div>
+            <div class="song-artist">${artist}</div>
+          </div>
+          <i class="fas fa-ellipsis-v more-btn"></i>
+        `;
+        resContainer.appendChild(row);
+      });
+    }
+
+    function playSong(url, title, artist, thumb) {
+      document.getElementById('curTitle').innerText = title;
+      document.getElementById('curArtist').innerText = artist;
+      document.getElementById('curThumb').src = thumb;
+
+      audio.src = url;
+      audio.play();
+      playIcon.className = "fas fa-pause";
+    }
+
+    function togglePlay() {
+      if (!audio.src) return;
+      if (audio.paused) {
+        audio.play();
+        playIcon.className = "fas fa-pause";
+      } else {
+        audio.pause();
+        playIcon.className = "fas fa-play";
       }
     }
 
-    function playSong(url, title) {
-      document.getElementById('nowPlaying').innerText = "Playing Full Song: " + title;
-      const audio = document.getElementById('audio');
-      audio.src = url;
-      audio.play();
+    audio.ontimeupdate = () => {
+      if (audio.duration) {
+        const percent = (audio.currentTime / audio.duration) * 100;
+        progressBar.style.width = percent + "%";
+      }
+    };
+
+    audio.onended = () => {
+      playIcon.className = "fas fa-play";
+      progressBar.style.width = "0%";
+    };
+
+    function nextDummy() {
+      alert("Click any song from the list to play next!");
     }
+
+    // Default Load with popular hits
+    window.onload = () => {
+      document.getElementById('query').value = 'Arijit Singh Hits';
+      searchMusic();
+    };
   </script>
 </body>
 </html>
