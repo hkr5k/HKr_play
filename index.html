@@ -23,7 +23,7 @@
 </head>
 <body>
   <header>
-    <input type="text" id="query" placeholder="Search songs or artists...">
+    <input type="text" id="query" placeholder="Search songs or artists..." onkeydown="if(event.key==='Enter') search()">
     <button onclick="search()">Search</button>
   </header>
   <ul id="list"></ul>
@@ -33,8 +33,7 @@
   </div>
 
   <script>
-    const apiTarget = "https://railway.app";
-    const proxyUrl = "https://allorigins.win";
+    const serverUrl = "https://railway.app";
 
     async function search() {
       const q = document.getElementById('query').value.trim();
@@ -43,25 +42,38 @@
       list.innerHTML = "<p style='text-align:center; color:#888;'>Searching songs...</p>";
 
       try {
-        const fullUrl = encodeURIComponent(`${apiTarget}/search/?query=${encodeURIComponent(q)}&filter=songs`);
-        const res = await fetch(`${proxyUrl}${fullUrl}`);
-        const data = await res.json();
-        
+        // Direct call without sluggish external proxies
+        let res = await fetch(`${serverUrl}/search/?query=${encodeURIComponent(q)}&filter=songs`);
+        if (!res.ok) {
+          throw new Error("HTTP error " + res.status);
+        }
+        let data = await res.json();
+
         list.innerHTML = "";
-        if (!data || data.length === 0) {
+        if (!Array.isArray(data) || data.length === 0) {
           list.innerHTML = "<p style='text-align:center; color:#888;'>No results found.</p>";
           return;
         }
 
         data.forEach(item => {
           const title = item.title || 'Unknown Title';
-          const artist = item.artists ? item.artists.map(a => a.name).join(', ') : 'Unknown Artist';
-          const thumb = (item.thumbnails && item.thumbnails.length > 0) ? item.thumbnails[item.thumbnails.length - 1].url : '';
+          let artist = 'Unknown Artist';
+          if (Array.isArray(item.artists)) {
+            artist = item.artists.map(a => typeof a === 'object' ? a.name : a).join(', ');
+          } else if (typeof item.artists === 'string') {
+            artist = item.artists;
+          }
+
+          let thumb = 'https://placeholder.com';
+          if (Array.isArray(item.thumbnails) && item.thumbnails.length > 0) {
+            thumb = item.thumbnails[item.thumbnails.length - 1].url || thumb;
+          }
+
           const videoId = item.videoId;
 
           const li = document.createElement('li');
           li.innerHTML = `
-            <img src="${thumb || 'https://placeholder.com'}" alt="art">
+            <img src="${thumb}" alt="art">
             <div class="info">
               <div class="title">${title}</div>
               <div class="sub">${artist}</div>
@@ -71,15 +83,20 @@
           list.appendChild(li);
         });
       } catch (err) {
-        list.innerHTML = "<p style='color:#e91e63; text-align:center;'>Search failed. Please try again.</p>";
+        list.innerHTML = "<p style='color:#e91e63; text-align:center;'>Search failed. Please ensure Railway server is awake and try again.</p>";
       }
     }
 
     function playSong(id, title) {
       document.getElementById('nowPlaying').innerText = "Playing: " + title;
       const audio = document.getElementById('audio');
-      audio.src = `https://leptons.xyz{id}`;
-      audio.play();
+      // Direct stream link via reliable public instance
+      audio.src = `https://kavin.rocks{id}`;
+      audio.play().catch(() => {
+        // Fallback stream
+        audio.src = `https://privacydev.net{id}`;
+        audio.play();
+      });
     }
   </script>
 </body>
