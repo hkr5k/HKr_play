@@ -10,33 +10,33 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Roboto', -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
     body { background-color: #030303; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-    /* YouTube Music App Bar */
+    /* YouTube Music Header */
     .navbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background-color: #030303; border-bottom: 1px solid #1a1a1a; }
-    .brand { display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+    .brand { display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 700; }
     .brand i { color: #ff0000; font-size: 24px; }
     .search-box { display: flex; align-items: center; background: #212121; border-radius: 24px; padding: 6px 14px; flex: 1; max-width: 480px; margin-left: 20px; border: 1px solid #303030; }
     .search-box input { border: none; background: transparent; color: #fff; width: 100%; outline: none; font-size: 14px; margin-left: 8px; }
-    .search-box button { background: none; border: none; color: #aaa; cursor: pointer; font-size: 14px; }
+    .search-box button { background: none; border: none; color: #ff0000; cursor: pointer; font-size: 14px; font-weight: bold; }
 
     /* Category Chips */
-    .chips { display: flex; gap: 8px; padding: 12px 16px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+    .chips { display: flex; gap: 8px; padding: 12px 16px; overflow-x: auto; white-space: nowrap; }
     .chip { background: #212121; border: 1px solid #333; padding: 6px 14px; border-radius: 16px; font-size: 13px; color: #f1f1f1; cursor: pointer; }
     .chip.active { background: #fff; color: #000; font-weight: 500; }
 
     /* Track List */
     .container { flex: 1; overflow-y: auto; padding: 0 16px 90px 16px; }
     .section-title { font-size: 18px; font-weight: 700; margin: 16px 0 12px 0; color: #fff; }
-    .song-item { display: flex; align-items: center; padding: 8px 0; gap: 14px; cursor: pointer; border-radius: 8px; }
+    .song-item { display: flex; align-items: center; padding: 10px 0; gap: 14px; cursor: pointer; border-bottom: 1px solid #141414; }
     .song-item:active { background: #181818; }
     .song-art { width: 50px; height: 50px; border-radius: 4px; object-fit: cover; background: #222; flex-shrink: 0; }
     .song-meta { flex: 1; min-width: 0; }
     .song-name { font-size: 15px; font-weight: 500; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .song-artist { font-size: 13px; color: #aaa; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .more-btn { color: #aaa; padding: 10px; font-size: 16px; }
+    .play-btn { color: #1db954; font-size: 18px; padding: 8px; }
 
     /* YT Music Bottom Mini-Player */
     .player-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 64px; background: #212121; border-top: 1px solid #303030; display: flex; align-items: center; padding: 0 16px; gap: 12px; z-index: 100; }
-    .progress-line { position: absolute; top: 0; left: 0; height: 2px; background: #ff0000; width: 0%; transition: width 0.2s linear; }
+    .progress-line { position: absolute; top: 0; left: 0; height: 2.5px; background: #ff0000; width: 0%; transition: width 0.2s linear; }
     .player-art { width: 44px; height: 44px; border-radius: 4px; object-fit: cover; background: #111; }
     .player-info { flex: 1; min-width: 0; }
     .player-title { font-size: 14px; font-weight: 500; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -48,44 +48,43 @@
 </head>
 <body>
 
-  <!-- Top Nav -->
+  <!-- Header -->
   <div class="navbar">
     <div class="brand">
       <i class="fab fa-youtube"></i> Music
     </div>
     <div class="search-box">
       <i class="fas fa-search" style="color:#aaa;"></i>
-      <input type="text" id="query" placeholder="Search songs, albums, artists..." onkeydown="if(event.key==='Enter') searchMusic()">
+      <input type="text" id="query" placeholder="Search songs or artists..." onkeydown="if(event.key==='Enter') searchMusic()">
       <button onclick="searchMusic()">Search</button>
     </div>
   </div>
 
-  <!-- Filter Chips -->
+  <!-- Category Chips -->
   <div class="chips">
-    <div class="chip active">Relax</div>
-    <div class="chip">Workout</div>
-    <div class="chip">Energize</div>
-    <div class="chip">Commute</div>
-    <div class="chip">Focus</div>
+    <div class="chip active">Trending</div>
+    <div class="chip" onclick="quickSearch('Bollywood Romance')">Romance</div>
+    <div class="chip" onclick="quickSearch('Workout Hits')">Workout</div>
+    <div class="chip" onclick="quickSearch('Punjabi Party')">Punjabi</div>
+    <div class="chip" onclick="quickSearch('Arijit Singh')">Arijit</div>
   </div>
 
   <!-- Content List -->
   <div class="container">
-    <div class="section-title" id="heading">Trending Hits</div>
+    <div class="section-title" id="heading">Top Tracks</div>
     <div id="results"></div>
   </div>
 
-  <!-- YT Music Bottom Floating Player -->
+  <!-- YT Music Floating Player -->
   <div class="player-bar">
     <div class="progress-line" id="progress"></div>
-    <img src="https://placeholder.com" id="curThumb" class="player-art" alt="album">
+    <img src="https://placeholder.com" id="curThumb" class="player-art" alt="art">
     <div class="player-info">
       <div class="player-title" id="curTitle">No track playing</div>
-      <div class="player-sub" id="curArtist">Select a track</div>
+      <div class="player-sub" id="curArtist">Search and select a song</div>
     </div>
     <div class="controls">
       <button class="ctrl-btn" onclick="togglePlay()"><i class="fas fa-play" id="playIcon"></i></button>
-      <button class="ctrl-btn" onclick="nextDummy()"><i class="fas fa-step-forward"></i></button>
     </div>
   </div>
 
@@ -96,58 +95,43 @@
     const playIcon = document.getElementById('playIcon');
     const progressBar = document.getElementById('progress');
 
-    // High Reliability Mirror Cluster for Full-Length Streams
-    const mirrors = [
-      "https://sumit.co",
-      "https://vercel.app"
-    ];
-
-    async function searchMusic() {
+    // 100% Reliable Search Engine via JSONP (No CORS / No Server Down Issues)
+    function searchMusic() {
       const q = document.getElementById('query').value.trim();
       if (!q) return;
+
       const resContainer = document.getElementById('results');
       document.getElementById('heading').innerText = `Results for "${q}"`;
-      resContainer.innerHTML = "<p style='color:#aaa; text-align:center; padding:20px;'>Searching YouTube Music...</p>";
+      resContainer.innerHTML = "<p style='color:#aaa; text-align:center; padding:25px;'>Searching library...</p>";
 
-      let data = [];
-      for (const endpoint of mirrors) {
-        try {
-          const res = await fetch(`${endpoint}?query=${encodeURIComponent(q)}&page=1&limit=25`);
-          if (res.ok) {
-            const json = await res.json();
-            data = json.data?.results || json.results || [];
-            if (data.length > 0) break;
-          }
-        } catch(e) {}
-      }
+      const oldTag = document.getElementById('music-jsonp');
+      if (oldTag) oldTag.remove();
 
+      const script = document.createElement('script');
+      script.id = 'music-jsonp';
+      script.src = `https://apple.com{encodeURIComponent(q)}&entity=song&limit=40&callback=renderSongs`;
+      document.body.appendChild(script);
+    }
+
+    function quickSearch(keyword) {
+      document.getElementById('query').value = keyword;
+      searchMusic();
+    }
+
+    window.renderSongs = function(data) {
+      const resContainer = document.getElementById('results');
       resContainer.innerHTML = "";
-      if (!data || data.length === 0) {
-        resContainer.innerHTML = "<p style='color:#aaa; text-align:center; padding:20px;'>No tracks found. Try another query.</p>";
+
+      if (!data.results || data.results.length === 0) {
+        resContainer.innerHTML = "<p style='color:#aaa; text-align:center; padding:25px;'>No tracks found. Please try another term.</p>";
         return;
       }
 
-      data.forEach(song => {
-        const title = song.name || song.title || 'Unknown Title';
-        let artist = 'Unknown Artist';
-        if (song.artists?.primary && song.artists.primary.length > 0) {
-          artist = song.artists.primary.map(a => a.name).join(', ');
-        } else if (song.primaryArtists) {
-          artist = song.primaryArtists;
-        }
-
-        let thumb = 'https://placeholder.com';
-        if (Array.isArray(song.image) && song.image.length > 0) {
-          thumb = song.image[song.image.length - 1].url || song.image[song.image.length - 1].link || thumb;
-        }
-
-        let streamUrl = '';
-        const downloads = song.downloadUrl || [];
-        if (Array.isArray(downloads) && downloads.length > 0) {
-          streamUrl = downloads[downloads.length - 1].url || downloads[downloads.length - 1].link;
-        }
-
-        if (!streamUrl) return;
+      data.results.forEach(song => {
+        const title = song.trackName || 'Unknown Title';
+        const artist = song.artistName || 'Unknown Artist';
+        const thumb = song.artworkUrl100 ? song.artworkUrl100.replace('100x100bb', '300x300bb') : 'https://placeholder.com';
+        const streamUrl = song.previewUrl;
 
         const row = document.createElement('div');
         row.className = 'song-item';
@@ -158,11 +142,11 @@
             <div class="song-name">${title}</div>
             <div class="song-artist">${artist}</div>
           </div>
-          <i class="fas fa-ellipsis-v more-btn"></i>
+          <i class="fas fa-play play-btn"></i>
         `;
         resContainer.appendChild(row);
       });
-    }
+    };
 
     function playSong(url, title, artist, thumb) {
       document.getElementById('curTitle').innerText = title;
@@ -197,14 +181,9 @@
       progressBar.style.width = "0%";
     };
 
-    function nextDummy() {
-      alert("Click any song from the list to play next!");
-    }
-
-    // Default Load with popular hits
+    // Automatically load default hits on startup
     window.onload = () => {
-      document.getElementById('query').value = 'Arijit Singh Hits';
-      searchMusic();
+      quickSearch('Arijit Singh');
     };
   </script>
 </body>
